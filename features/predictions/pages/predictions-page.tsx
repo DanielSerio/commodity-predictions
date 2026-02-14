@@ -1,27 +1,38 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
+import { PredictionsTable } from '../components/predictions-table';
+import { getAllPredictionsExtended } from '@/repositories/predictions';
+import { Button } from '@/components/ui/button';
 
-export function PredictionsPage() {
+export async function PredictionsPage() {
+  const predictions = await getAllPredictionsExtended();
+
   return (
-    <div className="flex flex-col gap-8 p-8" data-testid="predictions-page">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-extrabold tracking-tight">Predictions</h1>
-        <p className="text-muted-foreground text-lg italic">
-          Review and manage AI-generated commodity price predictions.
-        </p>
+    <div
+      className="flex flex-col gap-8 p-10 max-w-7xl mx-auto"
+      data-testid="predictions-page"
+    >
+      <div className="flex items-end justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-5xl font-black tracking-tighter bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+            Predictions
+          </h1>
+          <p className="text-muted-foreground text-lg font-medium">
+            Review and validate AI-generated forecasts for global commodities.
+          </p>
+        </div>
+
+        <Button
+          variant="outline"
+          className="gap-2 rounded-full px-6 hover:bg-primary/5"
+        >
+          <RefreshCcw className="h-4 w-4" />
+          Refresh Data
+        </Button>
       </div>
 
-      <Card className="border-dashed">
-        <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-          <Target className="h-5 w-5 text-muted-foreground" />
-          <CardTitle>No Predictions Yet</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Run a prediction job from the dashboard to generate forecasts.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        <PredictionsTable data={predictions} />
+      </div>
     </div>
   );
 }

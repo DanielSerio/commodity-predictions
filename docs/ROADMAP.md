@@ -6,24 +6,24 @@ This roadmap outlines the path to a Minimum Viable Product (MVP) for the Commodi
 
 **Goal**: Establish the data access layer and the basic commodity registry.
 
-- [ ] **Database Repositories**: Complete the `repositories/` layer with Drizzle-based CRUD operations for all tables (`commodities`, `predictions`, `models`, etc.).
-- [ ] **Seed System**: Create a robust seeding script to populate initial commodities (Gold, Silver, Copper) and ML engine definitions.
-- [ ] **Commodity Registry (`/commodities`)**:
-  - [ ] Implement the list view using TanStack Table with server-side sorting.
-  - [ ] Build the `/commodities/[slug]` detail page with a historical price chart (Recharts).
-- [ ] **Global Navigation**: Implement a premium sidebar using `shadcn/ui` based on the `ROUTING.md` specification.
+- [x] **Database Repositories**: Complete the `repositories/` layer with Drizzle-based CRUD operations for all tables (`commodities`, `predictions`, `models`, etc.).
+- [x] **Seed System**: Create a robust seeding script to populate initial commodities (Gold, Silver, Copper) and ML engine definitions.
+- [x] **Commodity Registry (`/commodities`)**:
+  - [x] Implement the list view using TanStack Table with server-side sorting.
+  - [x] Build the `/commodities/[slug]` detail page with a historical price chart (Recharts).
+- [x] **Global Navigation**: Implement a premium sidebar using `shadcn/ui` based on the `ROUTING.md` specification.
 
 ## Phase 2: The Prediction Lifecycle (Internal)
 
 **Goal**: Generate AI predictions and build the human review interface.
 
-- [ ] **Ollama Integration Service**:
-  - [ ] Set up the service layer to prompt local Ollama models (e.g., Llama 3) for price forecasts.
-  - [ ] Implement the prompt engineering logic for model confidence scores.
-- [ ] **Prediction Job Runner**: Create the logic to trigger prediction jobs across all tracked commodities.
-- [ ] **Review Workspace (`/predictions`)**:
-  - [ ] Build the "Active Predictions" list focusing on "Unreviewed" items.
-  - [ ] Implement the `/predictions/[id]` detail view where humans can set `human_confidence` and `human_predicted_price` overrides.
+- [x] **Ollama Integration Service**:
+  - [x] Set up the service layer to prompt local Ollama models (e.g., Llama 3) for price forecasts.
+  - [x] Implement the prompt engineering logic for model confidence scores.
+- [x] **Prediction Job Runner**: Create the logic to trigger prediction jobs across all tracked commodities.
+- [x] **Review Workspace (`/predictions`)**:
+  - [x] Build the "Active Predictions" list focusing on "Unreviewed" items.
+  - [x] Implement the `/predictions/[id]` detail view where humans can set `human_confidence` and `human_predicted_price` overrides.
 
 ## Phase 3: Closing the Loop (Actuals)
 
