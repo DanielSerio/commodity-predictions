@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "detailLevel": "All",
+  "tablePositions": [
+    {
+      "name": "commodities",
+      "schemaName": "public",
+      "x": 12,
+      "y": 12
+    },
+    {
+      "name": "prices",
+      "schemaName": "public",
+      "x": 422.20034465482104,
+      "y": -355.8142985812535
+    },
+    {
+      "name": "models",
+      "schemaName": "public",
+      "x": 12,
+      "y": 282
+    },
+    {
+      "name": "job_status",
+      "schemaName": "public",
+      "x": 12,
+      "y": 456
+    },
+    {
+      "name": "jobs",
+      "schemaName": "public",
+      "x": 481.7512310917858,
+      "y": 499.2215056667883
+    },
+    {
+      "name": "predictions",
+      "schemaName": "public",
+      "x": 895.1634164383028,
+      "y": -17.775443218482337
+    }
+  ],
+  "tableGroupCollapseStates": [],
+  "stickyNoteLayouts": [],
+  "referencePaths": []
+}

@@ -1,0 +1,49 @@
+Table commodities {
+  id int [pk]
+  name varchar
+  slug varchar
+  symbol varchar
+  created_at datetime [default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table prices {
+  id int [pk]
+  commodity_id int [ref: > commodities.id]
+  price decimal
+  date datetime
+}
+
+Table models {
+  id int [pk]
+  name varchar [NOT NULL, unique]
+  slug varchar [NOT NULL, unique]
+}
+
+Table job_status {
+  id int [pk]
+  name varchar [NOT NULL, unique]
+  slug varchar [NOT NULL, unique]
+}
+
+Table jobs {
+  id int [pk]
+  started_at datetime [NOT NULL, default: `CURRENT_TIMESTAMP`]
+  ended_at datetime
+  status_id int [ref: > job_status.id]
+}
+
+Table predictions {
+  id int [pk]
+  job_id int [ref: > jobs.id]
+  commodity_id int [ref: > commodities.id]
+  model_id int [ref: > models.id]
+  model_confidence decimal [NOT NULL] // 1-100
+  human_confidence decimal // 1-100, null = unreviewed
+  prediction_date datetime [NOT NULL]
+  predicted_price decimal
+  human_predicted_price decimal // human override, null = no override
+  prediction_actual_delta decimal // predicted_price - actual price, null = actual not yet available
+  created_at datetime [default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [default: `CURRENT_TIMESTAMP`]
+}
