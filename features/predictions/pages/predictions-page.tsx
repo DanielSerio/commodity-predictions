@@ -1,7 +1,6 @@
-import { RefreshCcw } from 'lucide-react';
-import { PredictionsTable } from '../components/predictions-table';
 import { getAllPredictionsExtended } from '@/repositories/predictions';
-import { Button } from '@/components/ui/button';
+import { PredictionsTable } from '../components/predictions-table';
+import { RefreshButton } from '../components/refresh-button';
 
 export async function PredictionsPage() {
   const predictions = await getAllPredictionsExtended();
@@ -21,13 +20,7 @@ export async function PredictionsPage() {
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          className="gap-2 rounded-full px-6 hover:bg-primary/5"
-        >
-          <RefreshCcw className="h-4 w-4" />
-          Refresh Data
-        </Button>
+        <RefreshButton />
       </div>
 
       <div className="grid gap-6">

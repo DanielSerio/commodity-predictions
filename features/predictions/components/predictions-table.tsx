@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -15,105 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-
-interface Prediction {
-  id: number;
-  commodityName: string | null;
-  modelName: string | null;
-  modelConfidence: number;
-  humanConfidence: number | null;
-  predictionDate: Date | number;
-  predictedPrice: number | null;
-  humanPredictedPrice: number | null;
-}
-
-const columns: ColumnDef<Prediction>[] = [
-  {
-    accessorKey: 'commodityName',
-    header: 'Commodity',
-    cell: ({ row }) => (
-      <span className="font-semibold text-foreground">
-        {row.original.commodityName || 'Unknown'}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'modelName',
-    header: 'Model',
-    cell: ({ row }) => (
-      <code className="bg-muted px-1.5 py-0.5 rounded text-xs">
-        {row.original.modelName || 'Unknown'}
-      </code>
-    ),
-  },
-  {
-    accessorKey: 'predictionDate',
-    header: 'For Date',
-    cell: ({ row }) => {
-      const date =
-        row.original.predictionDate instanceof Date
-          ? row.original.predictionDate
-          : new Date(row.original.predictionDate);
-      return format(date, 'MMM dd, yyyy');
-    },
-  },
-  {
-    accessorKey: 'predictedPrice',
-    header: 'AI Price',
-    cell: ({ row }) => (
-      <span className="font-mono text-emerald-500 font-bold">
-        ${row.original.predictedPrice?.toFixed(2) || '---'}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'modelConfidence',
-    header: 'AI Conf.',
-    cell: ({ row }) => (
-      <Badge
-        variant={row.original.modelConfidence > 80 ? 'default' : 'outline'}
-        className={cn(
-          row.original.modelConfidence > 80 &&
-            'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-        )}
-      >
-        {row.original.modelConfidence}%
-      </Badge>
-    ),
-  },
-  {
-    id: 'status',
-    header: 'Status',
-    cell: ({ row }) =>
-      row.original.humanConfidence !== null ? (
-        <Badge
-          variant="default"
-          className="bg-blue-500/10 text-blue-500 border-blue-500/20"
-        >
-          Reviewed
-        </Badge>
-      ) : (
-        <Badge variant="secondary">Unreviewed</Badge>
-      ),
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => (
-      <Link
-        href={`/predictions/${row.original.id}`}
-        className="text-primary hover:underline font-medium text-sm transition-colors"
-      >
-        Review Details
-      </Link>
-    ),
-  },
-];
+import {
+  usePredictionsColumns,
+  type Prediction,
+} from '../hooks/use-predictions-columns';
 
 export function PredictionsTable({ data }: { data: Prediction[] }) {
+  const columns = usePredictionsColumns();
+
   const table = useReactTable({
     data,
     columns,
@@ -122,7 +30,7 @@ export function PredictionsTable({ data }: { data: Prediction[] }) {
 
   return (
     <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-      <Table>
+      <Table data-testid="predictions-table">
         <TableHeader className="bg-muted/30">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
@@ -151,6 +59,7 @@ export function PredictionsTable({ data }: { data: Prediction[] }) {
               <TableRow
                 key={row.id}
                 className="hover:bg-muted/50 transition-colors group border-b last:border-0"
+                data-testid={`prediction-row-${row.original.id}`}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell

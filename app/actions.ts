@@ -1,13 +1,12 @@
 'use server';
 
-import { PredictionService } from '@/services/prediction.service';
+import { runPredictionJob } from '@/services/prediction.service';
 import { revalidatePath } from 'next/cache';
 import { updatePrediction } from '@/repositories/predictions';
 
 export async function runPredictionJobAction() {
   try {
-    const service = new PredictionService();
-    await service.runPredictionJob();
+    await runPredictionJob();
     revalidatePath('/predictions');
     revalidatePath('/');
     return { success: true };

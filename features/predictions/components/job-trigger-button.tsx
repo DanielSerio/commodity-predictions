@@ -6,7 +6,11 @@ import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { runPredictionJobAction } from '@/app/actions';
 
-export function JobTriggerButton() {
+interface JobTriggerButtonProps {
+  disabled?: boolean;
+}
+
+export function JobTriggerButton({ disabled }: JobTriggerButtonProps) {
   const [isPending, startTransition] = React.useTransition();
 
   const handleTrigger = () => {
@@ -28,7 +32,8 @@ export function JobTriggerButton() {
     <Button
       className="mt-6 font-bold tracking-tight rounded-xl py-6 px-8 transition-all hover:scale-105 active:scale-95 bg-white text-black hover:bg-zinc-200 disabled:opacity-50"
       onClick={handleTrigger}
-      disabled={isPending}
+      disabled={isPending || disabled}
+      data-testid="job-trigger-button"
     >
       {isPending ? (
         <>
