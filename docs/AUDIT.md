@@ -1,187 +1,209 @@
-# Code Audit: `feat/foundation` Branch
+# Code Audit: `feat/prediction-lifecycle` Branch
 
-**Date:** 2026-02-13
+**Date:** 2026-02-14
 **Reviewer:** Claude Opus 4.6
-**Scope:** All changes on `feat/foundation` vs `origin/master` (1 commit: `9806458 milestone: phase 1`)
-**Files changed:** 26 (+1,185 / -262 lines)
+**Scope:** All changes on `feat/prediction-lifecycle` vs `main` (1 commit: `f6da468 milestone: prediction lifecycle`)
+**Files changed:** 13 (+761 / -53 lines)
 
 ---
 
 ## Summary
 
-This branch introduces the foundational UI layer for the Commodity Predictions app: a sidebar layout shell (shadcn `Sidebar`), a dashboard page, a commodities list page with `@tanstack/react-table`, a commodity detail page with a Recharts price chart, a database seed script, and various styling customizations to shadcn primitives. It also fixes a typo in the `lib/utlis` directory name (renamed to `lib/utils`).
+This branch implements Phase 2 of the roadmap — the prediction lifecycle. It adds: an Ollama integration service for LLM-based commodity forecasts, a prediction job runner, a predictions list page with a TanStack Table, a prediction detail/review page, and a "Trigger Forecast Job" button on the dashboard. The repository layer was extended with join queries and aggregate counts. The ROADMAP.md was updated to mark Phase 1-2 items as complete.
 
 ---
 
 ## Critical Issues
 
-### 1. `sqlite.db-shm` committed to version control
+### 1. Review form does not persist data
 
-**File:** `sqlite.db-shm`
+**File:** `features/predictions/components/prediction-review-form.tsx:32-51`
 **Severity:** Critical
 
-The SQLite shared-memory file (`sqlite.db-shm`) is a binary runtime artifact that should never be committed. The `.gitignore` covers `sqlite.db`, `sqlite.db-journal`, and `sqlite.db-wal` but is missing `sqlite.db-shm`. This file will cause merge conflicts and pollute the repository.
+The `handleSave` function — the core feature of this branch — does not call a server action or API route. It logs to the console and fakes a save with `setTimeout(resolve, 800)`. The `toast.success` message ("Review saved and saved to prediction history") is misleading because nothing is written to the database. The `updatePrediction` repository function exists but is never wired up.
 
-**Fix:** Add `sqlite.db-shm` to `.gitignore` and remove it from tracking with `git rm --cached sqlite.db-shm`.
+**Fix:** Create a server action (e.g., `updatePredictionReviewAction`) that calls `updatePrediction(id, { humanPredictedPrice, humanConfidence })` and invoke it from the form.
 
-### 2. Missing unique constraint on `commodities.slug`
+### 2. Prediction detail page violates the thin-routes convention
 
-**File:** `lib/db/schema.ts:10`
-**Severity:** Critical
+**File:** `app/predictions/[id]/page.tsx` (136 lines)
+**Severity:** Critical (architectural)
 
-The `slug` column on the `commodities` table is defined as `text("slug").notNull()` but lacks a `.unique()` constraint. Since `getCommodityBySlug()` uses `.get()` (returns a single row), duplicate slugs would silently return an arbitrary match. The `models` and `jobStatus` tables correctly apply `.unique()` to their slug columns.
+This route file contains full page layout, data fetching, card components, and business logic. The project's core convention — documented in `ROUTING.md` and enforced across all other routes — is that `app/` files should be thin wrappers that import page components from `features/`. Every other route follows this pattern (`app/page.tsx` imports `DashboardPage`, `app/predictions/page.tsx` imports `PredictionsPage`, `app/commodities/[slug]/page.tsx` imports `CommodityDetailPage`).
 
-**Fix:** Add `.unique()` to the `commodities.slug` column definition.
+**Fix:** Extract the contents to `features/predictions/pages/prediction-detail-page.tsx` and make the route file a one-line import.
 
 ---
 
 ## High-Severity Issues
 
-### 3. Component files exceed 100-line limit
+### 3. Ollama service does not validate LLM response shape
+
+**File:** `services/ollama.service.ts:48`
+**Severity:** High
+
+`JSON.parse(data.response)` trusts that the LLM returned a well-formed object with `predictedPrice`, `confidence`, and `rationale` fields. LLMs routinely produce malformed output, extra keys, missing fields, or values outside expected ranges. If the LLM returns `confidence: 150` or `predictedPrice: "high"`, those values flow directly into the database via `Number()` coercion (producing `NaN` or nonsensical values).
+
+**Fix:** Validate with a Zod schema (already a project dependency via `drizzle-zod`):
+```ts
+const predictionSchema = z.object({
+  predictedPrice: z.number().positive(),
+  confidence: z.number().min(1).max(100),
+  rationale: z.string(),
+});
+const result = predictionSchema.parse(JSON.parse(data.response));
+```
+
+### 4. Component files exceed 100-line limit
 
 **Convention:** CLAUDE.md: "Component files should always be under 100 lines."
 
-| File | Lines |
-|---|---|
-| `features/commodities/components/commodity-list.tsx` | 168 |
-| `features/commodities/pages/commodity-detail-page.tsx` | 158 |
-| `features/commodities/components/price-chart.tsx` | 132 |
-| `features/predictions/pages/dashboard-page.tsx` | 112 |
-| `components/layout/app-sidebar.tsx` | 123 |
+| File | Lines | Notes |
+|---|---|---|
+| `app/predictions/[id]/page.tsx` | 136 | Should be in `features/` (see issue #2) |
+| `features/predictions/components/predictions-table.tsx` | 179 | Column defs should be in a `use-predictions-columns.ts` hook |
+| `features/predictions/components/prediction-review-form.tsx` | 120 | Price input and confidence slider could be extracted |
 
-**Fix:** Extract sub-components. For example, `commodity-detail-page.tsx` could extract the metadata card, the AI insights card, and the stat cards into separate files. The column definitions in `commodity-list.tsx` could be extracted to a `use-commodity-columns.ts` hook (column definition hooks are explicitly exempt from the 100-line rule).
+Column definition hooks are explicitly exempt from the 100-line rule per CLAUDE.md, so extracting the column definitions from `predictions-table.tsx` into a hook would bring both files under the limit.
 
-### 4. Hardcoded values in dashboard
+### 5. Model exclusion is hardcoded
 
-**File:** `features/predictions/pages/dashboard-page.tsx:5-34`
+**File:** `services/prediction.service.ts:14`
 **Severity:** High
 
-All dashboard statistics are hardcoded strings (`'5'`, `'0'`, `'4'`, `'Online'`). These values will become stale immediately and mislead users. The "Ollama Engine" section also hardcodes "4 models" and "Llama 3.2 Connected".
+```ts
+const models = (await getAllModels()).filter(m => m.name !== 'nomic-embed-text:latest');
+```
 
-**Fix:** Fetch these values from the database or backend. At minimum, query the commodity and model counts dynamically.
+The embedding model name is hardcoded as a string literal. If additional embedding models are registered, or the model name changes, predictions will silently run against inappropriate models. This is a brittle coupling between the service layer and specific seed data.
 
-### 5. Hardcoded stale strings in commodity detail
+**Fix:** Add a boolean `isPredictionModel` column to the `models` table schema, or at minimum extract the exclusion list to a configuration constant.
 
-**File:** `features/commodities/pages/commodity-detail-page.tsx:80-95`
+### 6. Prediction job silently swallows failures and marks as "completed"
+
+**File:** `services/prediction.service.ts:69-71`
 **Severity:** High
 
-- `"Last synced 14 minutes ago"` is a static string that will never update.
-- `"MetalPrice API"` is hardcoded as the data source, but there is no evidence this API is actually integrated.
-- `"Tracking 24/7 global spot prices"` and `"Active"` market status are static placeholders.
+When an individual prediction fails (inner `catch`), the error is logged but the loop continues and `processedCount` is still incremented. After the loop, the job is marked `completed` regardless of how many predictions actually succeeded. A job where 4 out of 5 predictions failed will still show 100% progress and "completed" status.
 
-These give users a false impression of live data.
-
-**Fix:** Either remove these placeholder cards or clearly label them as placeholders/coming-soon.
-
-### 6. Imports placed after code in `layout.tsx`
-
-**File:** `app/layout.tsx:14-18`
-**Severity:** High (convention violation)
-
-Imports for `SidebarProvider`, `AppSidebar`, `TooltipProvider`, `ThemeProvider`, and `SiteHeader` appear after the font variable declarations. All imports should be grouped at the top of the file per standard convention.
+**Fix:** Track a failure count. If any predictions failed, either mark the job status as "partially_completed" or include error details in the job record. At minimum, do not report 100% success when items were skipped.
 
 ---
 
 ## Medium-Severity Issues
 
-### 7. Sidebar navigation links to non-existent routes
+### 7. "Refresh Data" button is non-functional
 
-**File:** `components/layout/app-sidebar.tsx:48-87`
+**File:** `features/predictions/pages/predictions-page.tsx:24-30`
 **Severity:** Medium
 
-The sidebar has links to `/predictions`, `/models`, `/analysis`, `/settings/models`, and `/settings/calibration`, but none of these routes have corresponding page files. Users clicking these links will see a 404.
+The "Refresh Data" button renders with no `onClick` handler. It is a static `<Button>` that does nothing when clicked. Users will expect this to refresh predictions data.
 
-**Fix:** Either create stub pages for these routes, or disable/hide the links until the pages exist.
+**Fix:** Either wire it to `router.refresh()` or remove it until functionality is implemented.
 
-### 8. Modified shadcn/ui primitives make upgrades difficult
+### 8. Typo in Ollama prompt
 
-**Files:** `components/ui/card.tsx`, `components/ui/sidebar.tsx`
+**File:** `services/ollama.service.ts:17`
 **Severity:** Medium
 
-The `Card` component's default styles were changed from `bg-card` to `bg-card/40 backdrop-blur-xl` with custom border and shadow overrides. Similarly, `Sidebar` internals changed from `bg-sidebar` to `bg-sidebar/40 backdrop-blur-xl` and `SidebarInset` from `bg-background` to `bg-transparent`.
+"Analyize" should be "Analyze". This typo is sent to the LLM on every prediction call and may degrade prompt quality.
 
-These modifications are embedded directly in the shadcn primitives rather than applied via wrapper components or className overrides at the usage site. Future `shadcn/ui` upgrades will conflict with these changes.
+### 9. Repository functions called with `await` despite being synchronous
 
-**Recommendation:** Create wrapper components (e.g., `GlassCard`) that apply the glassmorphism styling on top of the unmodified shadcn primitives.
-
-### 9. `bg-zinc-950` hardcoded on body instead of using theme variable
-
-**File:** `app/globals.css:102`
+**File:** `services/prediction.service.ts:13-15`
 **Severity:** Medium
 
-The body background was changed from `bg-background` (which respects the theme CSS variable) to `bg-zinc-950` (a hardcoded Tailwind color). Even though dark mode is currently forced, this breaks the theming contract and will cause issues if light mode support is ever added.
+```ts
+const commodities = await getAllCommodities();
+const models = (await getAllModels()).filter(...);
+const statuses = await getAllJobStatuses();
+```
 
-**Fix:** Revert to `bg-background` and define the desired background color via the `--background` CSS variable.
+All repository functions use `better-sqlite3`, which is synchronous. These functions return values directly, not Promises. The `await` is harmless (it no-ops on non-Promises) but misleading. It gives the impression these are asynchronous I/O calls, obscuring the actual execution model and making it harder to reason about concurrency.
 
-### 10. Background animation blobs may cause performance issues
+**Fix:** Remove the `await` from synchronous repository calls. The only `await` in this service should be on `this.ollamaService.predict()`.
 
-**File:** `app/layout.tsx:34-39`
+### 10. Target date computed inside the inner loop
+
+**File:** `services/prediction.service.ts:58-59`
 **Severity:** Medium
 
-Six absolutely-positioned `div` elements with large `blur` values (90-140px) and CSS animations (`animate-pulse`, `animate-bounce`) are rendered on every page. Large blur radii are GPU-intensive and can cause jank on lower-end devices or when the page has complex content.
+```ts
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+```
 
-**Recommendation:** Consider using `will-change: transform` or reducing the number of blobs. Test on lower-end hardware. Consider using `prefers-reduced-motion` media query to disable these for accessibility.
+A new `Date()` is created for each model-commodity pair. If a job runs near midnight and crosses the date boundary, some predictions will target a different date than others within the same job. All predictions in a single job should target the same date.
 
-### 11. No `data-testid` attributes anywhere
+**Fix:** Compute the target date once before the loops begin.
+
+### 11. `Prediction` interface duplicates repository return type
+
+**File:** `features/predictions/components/predictions-table.tsx:23-32`
+**Severity:** Medium
+
+The `Prediction` interface is manually defined to match the shape returned by `getAllPredictionsExtended()`. If the repository query changes (e.g., adding a field), this interface will silently drift. TypeScript provides `ReturnType` and `Awaited` utilities to infer types from functions.
+
+**Fix:** Infer the type from the repository:
+```ts
+type Prediction = ReturnType<typeof getAllPredictionsExtended>[number];
+```
+
+### 12. No `data-testid` attributes on new interactive elements
 
 **Convention:** CLAUDE.md: "Always use testid selectors for testing."
 **Severity:** Medium
 
-None of the new components include `data-testid` attributes. This will make future Playwright/Storybook testing difficult.
+None of the new components include `data-testid`:
+- `prediction-review-form.tsx` — price input, confidence slider, submit button
+- `predictions-table.tsx` — table rows, review links
+- `job-trigger-button.tsx` — trigger button
+- `app/predictions/[id]/page.tsx` — page wrapper
+
+The existing dashboard and ollama status card do use `data-testid`.
+
+### 13. Further modifications to shadcn/ui `sidebar.tsx` primitive
+
+**File:** `components/ui/sidebar.tsx` (3 hunks changed)
+**Severity:** Medium
+
+This continues the pattern flagged in the Phase 1 audit. The `sidebarMenuButtonVariants` and `SidebarMenuSubButton` were modified with custom active states (`data-active:bg-primary/10`, `data-active:border-primary/20`, `backdrop-blur-md`), hover states, and transition changes. These are embedded in the shadcn primitive rather than applied via wrapper components.
+
+Each modification deepens the divergence from upstream shadcn/ui, making future upgrades increasingly difficult.
 
 ---
 
 ## Low-Severity Issues
 
-### 12. Seed script uses double quotes inconsistently
+### 14. `OllamaService` and `PredictionService` use classes while the rest of the codebase uses plain functions
 
-**File:** `scripts/seed.ts`
+**Files:** `services/ollama.service.ts`, `services/prediction.service.ts`
 **Severity:** Low
 
-The seed script uses double quotes throughout while the rest of the codebase has been normalized to single quotes. Minor inconsistency.
+The repository layer is entirely plain exported functions. The services layer uses classes with `new` instantiation. While the "no classes" rule in CLAUDE.md targets React components specifically, the inconsistency between layers is worth noting. The `PredictionService` constructor's default parameter (`new OllamaService()`) could be replaced with a simple function parameter with a default.
 
-### 13. `ThemeProvider` wrapper adds unnecessary complexity
+### 15. "System Operational" status is still hardcoded
 
-**File:** `components/theme-provider.tsx`
+**File:** `features/predictions/components/ollama-status-card.tsx:26-28`
 **Severity:** Low
 
-The `ThemeProvider` is configured with `defaultTheme="dark"` and `forcedTheme="dark"`, meaning theme switching is disabled. The wrapper component, `next-themes` dependency, and `suppressHydrationWarning` on `<html>` add complexity for a feature that is intentionally disabled.
+The Phase 1 audit flagged "Llama 3.2 Connected" as a hardcoded string. It has been replaced with "System Operational", which is still hardcoded. No health check against the Ollama API is performed.
 
-**Recommendation:** If dark mode is the only supported theme, the `ThemeProvider` can be removed entirely and `class="dark"` can be set directly on `<html>`.
+### 16. `parseInt` without NaN guard on route parameter
 
-### 14. `seed.ts` duplicates database connection logic
-
-**File:** `scripts/seed.ts:5-6` vs `lib/db/index.ts`
+**File:** `app/predictions/[id]/page.tsx:13`
 **Severity:** Low
 
-The seed script creates its own `Database` and `drizzle` instance rather than importing from `@/lib/db`. This duplicates configuration (e.g., the seed script doesn't enable WAL mode or foreign keys).
-
-**Fix:** Import the shared `db` instance from `@/lib/db`.
-
-### 15. `PriceChart` uses `hsl(var(--primary))` but theme uses `oklch`
-
-**File:** `features/commodities/components/price-chart.tsx:47,51,78,97`
-**Severity:** Low
-
-The chart references `hsl(var(--primary))` and `hsl(var(--muted-foreground))`, but the CSS variables in `globals.css` are defined using `oklch()` color space. These `hsl()` references will not resolve correctly and chart colors will likely be wrong or invisible.
-
-**Fix:** Use `oklch(var(--primary))` or extract the color values via CSS `color-mix()` / JS.
-
-### 16. `commodity-list.tsx` sidebar active state uses exact match
-
-**File:** `components/layout/app-sidebar.tsx:98`
-**Severity:** Low
-
-`isActive={pathname === item.url}` uses strict equality. Visiting `/commodities/gold` won't highlight the "Commodities" nav item. Consider using `pathname.startsWith(item.url)` (with special-casing for `/` to avoid matching everything).
+`parseInt(params.id)` returns `NaN` for non-numeric input. The query then passes `NaN` to `getPredictionById()`, which returns `undefined`, triggering `notFound()`. The end result is correct (user sees a 404), but the intent is unclear — an explicit guard like `Number.isNaN` before the query would make this a deliberate validation rather than an accidental fallthrough.
 
 ---
 
 ## Positive Observations
 
-- Clean feature-module file structure (`features/commodities/`, `features/predictions/`).
-- Good separation between app routes (thin) and feature pages (contain logic).
-- Repository pattern for data access is consistent and well-organized.
-- `onConflictDoNothing()` in seed script prevents duplicate insert errors.
-- Proper use of Next.js `notFound()` for missing commodities.
-- `lib/utlis` typo correctly renamed to `lib/utils`.
-- Consistent use of the `cn()` utility for className composition.
+- Good use of `useTransition` in `JobTriggerButton` for non-blocking server action calls with proper loading states.
+- `getAllPredictionsExtended()` is a well-structured join query that keeps the client component free of data-assembly logic.
+- `getUnreviewedPredictionsCount()` correctly replaces the hardcoded `pendingReviews = 0` from Phase 1.
+- The prediction job runner design (create job → update progress → mark complete) is a sound pattern for background processing.
+- `OllamaStatusCard` now dynamically reflects the actual model count.
+- Proper use of `revalidatePath` in the server action to refresh cached pages after job completion.
+- The `PredictionReviewForm` UI is well-designed with a slider, reference to AI recommendation, and clear affordances.

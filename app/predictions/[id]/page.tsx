@@ -9,8 +9,13 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Target, Cpu, User } from 'lucide-react';
 import Link from 'next/link';
 
-export default async function Page({ params }: { params: { id: string } }) {
-  const prediction = await getPredictionById(parseInt(params.id));
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const prediction = await getPredictionById(parseInt(id));
 
   if (!prediction) {
     notFound();

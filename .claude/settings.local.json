@@ -6,7 +6,8 @@
       "Bash(npm run db:push:*)",
       "Bash(npm run build:*)",
       "Bash(npx tsx:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(git -C \"c:\\\\developer\\\\commodity-predictions\" log --oneline -10)"
     ]
   }
 }
