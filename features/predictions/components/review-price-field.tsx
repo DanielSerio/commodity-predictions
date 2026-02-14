@@ -7,23 +7,25 @@ import {
   FieldError,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { UseFormRegister, FieldErrors } from 'react-hook-form';
+import { UseFormRegister, FieldValues, Path } from 'react-hook-form';
 
-interface ReviewPriceFieldProps {
-  register: UseFormRegister<any>;
+interface ReviewPriceFieldProps<T extends FieldValues> {
+  register: UseFormRegister<T>;
+  name: Path<T>;
   error?: string;
   recommendedPrice?: number;
 }
 
-export function ReviewPriceField({
+export function ReviewPriceField<T extends FieldValues>({
   register,
+  name,
   error,
   recommendedPrice,
-}: ReviewPriceFieldProps) {
+}: ReviewPriceFieldProps<T>) {
   return (
     <Field className="space-y-3">
       <FieldLabel
-        htmlFor="humanPredictedPrice"
+        htmlFor={name}
         className="text-sm font-bold uppercase tracking-widest text-muted-foreground"
       >
         Adjusted Price Forecast
@@ -34,11 +36,12 @@ export function ReviewPriceField({
             $
           </span>
           <Input
-            id="humanPredictedPrice"
+            id={name}
             type="number"
             step="0.01"
             className="pl-10 h-16 text-3xl font-mono font-black border-2 focus-visible:ring-offset-0 focus-visible:ring-primary/20"
-            {...register('humanPredictedPrice', { valueAsNumber: true })}
+            {...register(name, { valueAsNumber: true })}
+            data-testid="review-price-input"
           />
         </div>
         {recommendedPrice !== undefined && (

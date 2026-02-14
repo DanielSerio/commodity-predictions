@@ -24,7 +24,7 @@ export async function updatePredictionAction(
   data: { humanPredictedPrice: number; humanConfidence: number; }
 ) {
   try {
-    await updatePrediction(id, {
+    updatePrediction(id, {
       ...data,
       updatedAt: new Date(),
     });

@@ -74,6 +74,7 @@ export function PredictionReviewForm({
       <div className="space-y-6">
         <ReviewPriceField
           register={register}
+          name="humanPredictedPrice"
           error={errors.humanPredictedPrice?.message}
           recommendedPrice={initialData.predictedPrice ?? undefined}
         />
@@ -91,6 +92,7 @@ export function PredictionReviewForm({
         type="submit"
         className="w-full h-14 text-xl font-black uppercase tracking-tighter shadow-2xl shadow-primary/30 transition-all active:scale-95 disabled:grayscale"
         disabled={loading}
+        data-testid="confirm-review-button"
       >
         {loading ? 'Committing...' : 'Confirm Review'}
       </Button>

@@ -40,6 +40,7 @@ export function ReviewConfidenceField({
           value={[value]}
           onValueChange={(vals) => onChange(vals[0])}
           className="py-4"
+          data-testid="review-confidence-slider"
         />
         <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
           <span>Speculative</span>
