@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Info } from 'lucide-react';
 import Link from 'next/link';
+import { BackfillButton } from '../components/backfill-button';
 
 interface CommodityDetailProps {
   slug: string;
@@ -64,25 +65,32 @@ export async function CommodityDetailPage({ slug }: CommodityDetailProps) {
       <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
         {/* Main Chart Area */}
         <div className="lg:col-span-2 space-y-8">
-          <PriceChart
-            data={prices}
-            commodityName={commodity.name}
-          />
-
-          {/* Placeholder — real market data integration coming later */}
-          <Card className="border-dashed">
-            <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-sm font-medium">
-                Market Data
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Market data integration coming soon.
-              </p>
-            </CardContent>
-          </Card>
+          {prices.length > 0 ? (
+            <PriceChart
+              data={prices}
+              commodityName={commodity.name}
+            />
+          ) : (
+            <Card className="border-dashed">
+              <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">
+                  No Price History
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <p className="text-sm text-muted-foreground">
+                  No historical price data exists for this commodity yet.
+                  Backfill 30 days of closing prices from the MetalPrice API.
+                </p>
+                <BackfillButton
+                  commodityId={commodity.id}
+                  symbol={commodity.symbol}
+                  slug={commodity.slug}
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar Info */}
@@ -92,7 +100,11 @@ export async function CommodityDetailPage({ slug }: CommodityDetailProps) {
             id={commodity.id}
             createdAt={commodity.createdAt}
           />
-          <AIInsightsCard commodityName={commodity.name} />
+          <AIInsightsCard
+            commodityName={commodity.name}
+            commodityId={commodity.id}
+            slug={commodity.slug}
+          />
         </div>
       </div>
     </div>

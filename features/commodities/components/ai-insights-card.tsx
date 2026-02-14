@@ -1,20 +1,24 @@
 import { TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { PredictButton } from './predict-button';
 
 interface AIInsightsCardProps {
   commodityName: string;
+  commodityId: number;
+  slug: string;
 }
 
-export function AIInsightsCard({ commodityName }: AIInsightsCardProps) {
+export function AIInsightsCard({ commodityName, commodityId, slug }: AIInsightsCardProps) {
   return (
     <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-foreground p-8 text-primary-foreground shadow-xl relative overflow-hidden group" data-testid="ai-insights-card">
-      <div className="relative z-10">
-        <h3 className="text-xl font-bold mb-2">AI Insights</h3>
-        <p className="text-sm text-primary-foreground/80 leading-relaxed mb-4">
-          Predictive models for {commodityName} are currently in the calibration
-          phase.
+      <div className="relative z-10 flex flex-col gap-3">
+        <h3 className="text-xl font-bold mb-1">AI Insights</h3>
+        <p className="text-sm text-primary-foreground/80 leading-relaxed">
+          Generate next-day price predictions for {commodityName} using all
+          registered models.
         </p>
+        <PredictButton commodityId={commodityId} slug={slug} />
         <Button
           variant="secondary"
           className="w-full font-bold shadow-lg"

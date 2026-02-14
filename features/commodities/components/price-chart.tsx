@@ -34,28 +34,24 @@ export function PriceChart({ data, commodityName }: PriceChartProps) {
         <div className="h-[400px] w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <defs>
-                <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="oklch(var(--primary))" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="oklch(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
-                stroke="oklch(var(--muted-foreground))"
-                strokeOpacity={0.1}
+                stroke="currentColor"
+                className="text-muted-foreground/10"
               />
               <XAxis
                 dataKey="date"
-                stroke="oklch(var(--muted-foreground))"
+                stroke="currentColor"
+                className="text-muted-foreground"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 dy={10}
               />
               <YAxis
-                stroke="oklch(var(--muted-foreground))"
+                stroke="currentColor"
+                className="text-muted-foreground"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
@@ -66,14 +62,14 @@ export function PriceChart({ data, commodityName }: PriceChartProps) {
               <Line
                 type="monotone"
                 dataKey="price"
-                stroke="oklch(var(--primary))"
+                stroke="currentColor"
+                className="text-primary"
                 strokeWidth={3}
                 dot={false}
                 activeDot={{
                   r: 6,
                   className: 'fill-primary stroke-background stroke-2 shadow-lg',
                 }}
-                className="drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]"
               />
             </LineChart>
           </ResponsiveContainer>

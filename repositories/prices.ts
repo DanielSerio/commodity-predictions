@@ -24,6 +24,10 @@ export function createPrice(data: NewPrice) {
   return db.insert(prices).values(data).returning().get();
 }
 
+export function createPrices(data: NewPrice[]) {
+  return db.insert(prices).values(data).returning().all();
+}
+
 export function updatePrice(id: number, data: Partial<NewPrice>) {
   return db
     .update(prices)

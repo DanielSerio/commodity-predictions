@@ -142,6 +142,27 @@
   background: transparent;
 }
 
+/* Sidebar Premium Styles */
+[data-sidebar='menu-button'],
+[data-sidebar='menu-sub-button'] {
+  @apply transition-all duration-200 border border-transparent;
+}
+
+[data-sidebar='menu-button']:hover,
+[data-sidebar='menu-sub-button']:hover {
+  @apply bg-sidebar-accent/30 border-sidebar-border/50;
+}
+
+[data-sidebar='menu-button'][data-active='true'],
+[data-sidebar='menu-sub-button'][data-active='true'] {
+  @apply bg-primary/10 text-primary border-primary/20 font-bold backdrop-blur-md shadow-sm;
+}
+
+[data-sidebar='menu-button'][data-active='true']:hover,
+[data-sidebar='menu-sub-button'][data-active='true']:hover {
+  @apply bg-primary/15 border-primary/30;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;

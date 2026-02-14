@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
+    "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-table": "^8.21.3",
     "better-sqlite3": "^12.6.2",
     "class-variance-authority": "^0.7.1",
@@ -30,6 +31,7 @@
     "react": "19.2.3",
     "react-day-picker": "^9.13.2",
     "react-dom": "19.2.3",
+    "react-hook-form": "^7.71.1",
     "react-resizable-panels": "^4.6.2",
     "recharts": "^2.15.4",
     "shadcn": "^3.8.4",
