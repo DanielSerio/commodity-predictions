@@ -4,7 +4,7 @@ import { runPredictionJob } from '@/services/prediction.service';
 import { fetchHistoricalPrices, getBackfillDateRange } from '@/services/metalprice.service';
 import { revalidatePath } from 'next/cache';
 import { updatePrediction } from '@/repositories/predictions';
-import { createPrice } from '@/repositories/prices';
+import { createPrices } from '@/repositories/prices';
 import { getCommodityById } from '@/repositories/commodities';
 
 export async function runPredictionJobAction() {
@@ -73,13 +73,13 @@ export async function backfillCommodityHistoryAction(
       return { success: false, error: 'No price data returned from API' };
     }
 
-    for (const entry of prices) {
-      createPrice({
-        commodityId,
-        price: entry.price,
-        date: entry.date,
-      });
-    }
+    const newPrices = prices.map((entry) => ({
+      commodityId,
+      price: entry.price,
+      date: entry.date,
+    }));
+
+    createPrices(newPrices);
 
     revalidatePath(`/commodities/${slug}`);
     revalidatePath('/commodities');

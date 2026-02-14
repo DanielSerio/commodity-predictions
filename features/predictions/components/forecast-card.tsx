@@ -27,7 +27,9 @@ export function ForecastCard({
               Predicted Price
             </p>
             <p className="text-3xl font-mono font-bold text-emerald-500">
-              ${predictedPrice?.toFixed(2)}
+              {predictedPrice !== null
+                ? `$${predictedPrice.toFixed(2)}`
+                : '---'}
             </p>
           </div>
           <div className="space-y-1">

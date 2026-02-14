@@ -6,12 +6,10 @@ import { createPrediction } from '@/repositories/predictions';
 import { getAllJobStatuses } from '@/repositories/job-status';
 import { predictPrice } from './ollama.service';
 
-const EXCLUDED_MODELS = ['nomic-embed-text:latest'];
-
 /**
  * Runs a prediction job. When commodityId is provided, only that commodity
  * is predicted using the active model. Otherwise, all commodities are
- * predicted using all non-excluded models.
+ * predicted using all prediction-categorized models.
  */
 export async function runPredictionJob(commodityId?: number) {
   let commodities;
@@ -24,14 +22,14 @@ export async function runPredictionJob(commodityId?: number) {
     if (commodities.length === 0) throw new Error('No commodities found');
   }
 
-  // Single-commodity jobs use the active model; bulk jobs use all models
+  // Single-commodity jobs use the active model; bulk jobs use all prediction models
   let models;
   if (commodityId) {
     const active = getActiveModel();
     if (!active) throw new Error('No active model configured');
     models = [active];
   } else {
-    models = getAllModels().filter((m) => !EXCLUDED_MODELS.includes(m.name));
+    models = getAllModels().filter((m) => m.category === 'prediction');
   }
   const statuses = getAllJobStatuses();
 
@@ -110,10 +108,9 @@ export async function runPredictionJob(commodityId?: number) {
     }
 
     // Determine final status based on errors
+    // PR Review: Mark job as failed if any prediction fails
     const finalStatusId =
-      errorCount === totalCount
-        ? failedStatus.id
-        : completedStatus.id;
+      errorCount > 0 ? failedStatus.id : completedStatus.id;
 
     updateJob(job.id, {
       statusId: finalStatusId,
