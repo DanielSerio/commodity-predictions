@@ -19,10 +19,10 @@ function main() {
 
   // Seed Models
   const modelData = [
-    { name: 'tinyllama:latest', slug: 'tinyllama-latest' },
-    { name: 'phi3:mini', slug: 'phi3-mini' },
-    { name: 'nomic-embed-text:latest', slug: 'nomic-embed-text-latest' },
-    { name: 'llama3.2:latest', slug: 'llama3-2-latest' },
+    { name: 'tinyllama:latest', slug: 'tinyllama-latest', isActive: false },
+    { name: 'phi3:mini', slug: 'phi3-mini', isActive: false },
+    { name: 'nomic-embed-text:latest', slug: 'nomic-embed-text-latest', isActive: false },
+    { name: 'llama3.2:latest', slug: 'llama3-2-latest', isActive: true },
   ];
 
   for (const item of modelData) {

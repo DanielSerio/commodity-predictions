@@ -100,7 +100,11 @@ export async function CommodityDetailPage({ slug }: CommodityDetailProps) {
             id={commodity.id}
             createdAt={commodity.createdAt}
           />
-          <AIInsightsCard commodityName={commodity.name} />
+          <AIInsightsCard
+            commodityName={commodity.name}
+            commodityId={commodity.id}
+            slug={commodity.slug}
+          />
         </div>
       </div>
     </div>

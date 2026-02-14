@@ -40,6 +40,7 @@ export const models = sqliteTable("models", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
   slug: text("slug").notNull().unique(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(false),
 });
 
 export const insertModelSchema = createInsertSchema(models);

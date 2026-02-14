@@ -24,6 +24,10 @@ export function removeModel(id: number) {
   return db.delete(models).where(eq(models.id, id)).returning().get();
 }
 
+export function getActiveModel() {
+  return db.select().from(models).where(eq(models.isActive, true)).get();
+}
+
 export function getModelCount() {
   return db.select({ count: count() }).from(models).get()?.count ?? 0;
 }

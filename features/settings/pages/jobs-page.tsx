@@ -10,12 +10,20 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
+import { JobsRefresher } from '../components/jobs-refresher';
 
 export async function JobsPage() {
   const jobs = getAllJobs();
+  const hasActiveJobs = jobs.some(
+    (j) => j.statusSlug === 'pending' || j.statusSlug === 'running',
+  );
 
   return (
-    <div className="flex flex-col gap-6 p-6" data-testid="jobs-page">
+    <div
+      className="flex flex-col gap-6 p-6"
+      data-testid="jobs-page"
+    >
+      <JobsRefresher hasActiveJobs={hasActiveJobs} />
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Background Jobs</h1>
         <p className="text-muted-foreground">
@@ -46,7 +54,10 @@ export async function JobsPage() {
               </TableRow>
             ) : (
               jobs.map((job) => (
-                <TableRow key={job.id}>
+                <TableRow
+                  key={job.id}
+                  data-testid={`job-row-${job.id}`}
+                >
                   <TableCell className="font-medium">{job.name}</TableCell>
                   <TableCell>
                     <JobStatusBadge
@@ -61,25 +72,27 @@ export async function JobsPage() {
                           value={job.progress}
                           className="h-2"
                         />
-                        <span className="text-xs text-muted-foreground w-8 text-right">
+                        <span className="text-xs text-muted-foreground w-8 text-right font-mono">
                           {job.progress}%
                         </span>
                       </div>
                       {(job.totalItems ?? 0) > 0 && (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground font-medium">
                           {job.processedItems} / {job.totalItems} items
                         </div>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground font-mono text-[10px]">
                     {format(job.startedAt, 'MMM d, HH:mm:ss')}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {job.endedAt ? (
-                      formatDuration(job.startedAt, job.endedAt)
+                      <span className="font-mono text-[10px]">
+                        {formatDuration(job.startedAt, job.endedAt)}
+                      </span>
                     ) : (
-                      <span className="animate-pulse text-primary">
+                      <span className="animate-pulse text-primary font-bold text-[10px] uppercase tracking-tighter">
                         Running...
                       </span>
                     )}

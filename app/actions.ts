@@ -11,10 +11,28 @@ export async function runPredictionJobAction() {
   try {
     await runPredictionJob();
     revalidatePath('/predictions');
+    revalidatePath('/settings/jobs');
     revalidatePath('/');
     return { success: true };
   } catch (error) {
     console.error('Action failed:', error);
+    return { success: false, error: 'Failed to run prediction job' };
+  }
+}
+
+export async function runCommodityPredictionAction(
+  commodityId: number,
+  slug: string,
+) {
+  try {
+    await runPredictionJob(commodityId);
+    revalidatePath(`/commodities/${slug}`);
+    revalidatePath('/predictions');
+    revalidatePath('/settings/jobs');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error('Commodity prediction action failed:', error);
     return { success: false, error: 'Failed to run prediction job' };
   }
 }
@@ -65,6 +83,7 @@ export async function backfillCommodityHistoryAction(
 
     revalidatePath(`/commodities/${slug}`);
     revalidatePath('/commodities');
+    revalidatePath('/settings/jobs');
     return { success: true, count: prices.length };
   } catch (error) {
     console.error('Backfill action failed:', error);

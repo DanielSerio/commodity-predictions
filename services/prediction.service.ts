@@ -1,5 +1,5 @@
-import { getAllCommodities } from '@/repositories/commodities';
-import { getAllModels } from '@/repositories/models';
+import { getAllCommodities, getCommodityById } from '@/repositories/commodities';
+import { getAllModels, getActiveModel } from '@/repositories/models';
 import { getPricesByCommodityId } from '@/repositories/prices';
 import { createJob, updateJob } from '@/repositories/jobs';
 import { createPrediction } from '@/repositories/predictions';
@@ -8,9 +8,31 @@ import { predictPrice } from './ollama.service';
 
 const EXCLUDED_MODELS = ['nomic-embed-text:latest'];
 
-export async function runPredictionJob() {
-  const commodities = getAllCommodities();
-  const models = getAllModels().filter((m) => !EXCLUDED_MODELS.includes(m.name));
+/**
+ * Runs a prediction job. When commodityId is provided, only that commodity
+ * is predicted using the active model. Otherwise, all commodities are
+ * predicted using all non-excluded models.
+ */
+export async function runPredictionJob(commodityId?: number) {
+  let commodities;
+  if (commodityId) {
+    const commodity = getCommodityById(commodityId);
+    if (!commodity) throw new Error(`Commodity ${commodityId} not found`);
+    commodities = [commodity];
+  } else {
+    commodities = getAllCommodities();
+    if (commodities.length === 0) throw new Error('No commodities found');
+  }
+
+  // Single-commodity jobs use the active model; bulk jobs use all models
+  let models;
+  if (commodityId) {
+    const active = getActiveModel();
+    if (!active) throw new Error('No active model configured');
+    models = [active];
+  } else {
+    models = getAllModels().filter((m) => !EXCLUDED_MODELS.includes(m.name));
+  }
   const statuses = getAllJobStatuses();
 
   const pendingStatus = statuses.find((s) => s.slug === 'pending');
@@ -23,7 +45,9 @@ export async function runPredictionJob() {
   }
 
   const job = createJob({
-    name: `Prediction Job - ${new Date().toLocaleString()}`,
+    name: commodityId
+      ? `Prediction Job - ${commodities[0].name} - ${new Date().toLocaleString()}`
+      : `Prediction Job - ${new Date().toLocaleString()}`,
     statusId: pendingStatus.id,
     totalItems: commodities.length * models.length,
     processedItems: 0,
