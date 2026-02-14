@@ -3,7 +3,7 @@ import { PredictionsTable } from '../components/predictions-table';
 import { RefreshButton } from '../components/refresh-button';
 
 export async function PredictionsPage() {
-  const predictions = await getAllPredictionsExtended();
+  const predictions = getAllPredictionsExtended();
 
   return (
     <div

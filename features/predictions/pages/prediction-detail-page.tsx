@@ -16,11 +16,11 @@ export async function PredictionDetailPage({
 }: {
   predictionId: number;
 }) {
-  const prediction = await getPredictionById(predictionId);
+  const prediction = getPredictionById(predictionId);
   if (!prediction) notFound();
 
-  const commodity = await getCommodityById(prediction.commodityId);
-  const model = await getModelById(prediction.modelId);
+  const commodity = getCommodityById(prediction.commodityId);
+  const model = getModelById(prediction.modelId);
 
   return (
     <div
